@@ -3,13 +3,6 @@ import Modal from "./components/Modal";
 
 const limit = 20;
 
-const debounce = (method, delay) => {
-  clearTimeout(method._tId);
-  method._tId = setTimeout(function () {
-    method();
-  }, delay);
-};
-
 export default function App() {
   let [feed, updateFeed] = useState([]);
   const [profile, setProfile] = useState({});
@@ -20,44 +13,28 @@ export default function App() {
   const fetchData = async () => {
     // Start Loader
     setLoader({ ...loader, loading: true });
-
     // Query the API, extract data and info
-    const { results: data, info } = await (
-      await fetch(
-        `https://randomuser.me/api/?page=${loader.nextPage}&results=${limit}&seed=abc&inc=name,gender,email,phone,picture`
-      )
-    ).json();
+    const url = `https://randomuser.me/api/?page=${loader.nextPage}&results=${limit}&seed=abc&inc=name,gender,email,phone,picture`;
 
-    // Extract and update the query response into the state
-    let { page, results } = info;
-    if (results >= limit) page++;
-    setLoader({ ...loader, loading: false, nextPage: page, results });
+    const { results, info } = await (await fetch(url)).json();
+    setLoader({ loading: false, nextPage: info.results >= 20 ? info.page + 1 : info.page });
+    updateFeed((prevState) => prevState.concat(results));
+  };
 
-    // Add new feed to array
-    console.log(data);
-    updateFeed(feed.concat(data));
+  const handleScroll = () => {
+    if (window.innerHeight + document.documentElement.scrollTop !== document.documentElement.offsetHeight) return;
+    if (loader.loading === false) fetchData();
   };
 
   // Fetch the first page on page load
   useEffect(() => {
     fetchData();
+  }, []);
 
-    window.onscroll = function () {
-      debounce(() => {
-        if (window.innerHeight + window.scrollY >= document.body.offsetHeight) {
-          if (!loader.loading) fetchData();
-          console.log("bottom");
-        }
-      }, 200);
-    };
-    // window.onscroll = function () {
-    //   debounce(() => {
-    //     if (window.innerHeight + window.scrollY >= document.body.offsetHeight - 100) {
-    //       // if (!loader.loading) fetchData();
-    //       console.log("bottom");
-    //     }
-    //   }, 2000);
-    // };
+  // Infinite Scroll
+  useEffect(() => {
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
   // Control Open modal
