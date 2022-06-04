@@ -1,35 +1,63 @@
 import React, { useEffect, useState } from "react";
 import Modal from "./components/Modal";
 
+const limit = 20;
+
+const debounce = (method, delay) => {
+  clearTimeout(method._tId);
+  method._tId = setTimeout(function () {
+    method();
+  }, delay);
+};
+
 export default function App() {
   let [feed, updateFeed] = useState([]);
   const [profile, setProfile] = useState({});
   const [filter, setFilter] = useState("");
   const [displayModal, setDisplay] = useState(false);
-  const [loader, setLoad] = useState({ results: 0, page: 0, loading: false });
+  const [loader, setLoader] = useState({ nextPage: 1, loading: false });
 
   const fetchData = async () => {
     // Start Loader
-    setLoad({ ...loader, loading: true });
+    setLoader({ ...loader, loading: true });
 
     // Query the API, extract data and info
     const { results: data, info } = await (
       await fetch(
-        `https://randomuser.me/api/?page=${loader.page}&results=20&seed=abc&inc=name,gender,email,phone,picture`
+        `https://randomuser.me/api/?page=${loader.nextPage}&results=${limit}&seed=abc&inc=name,gender,email,phone,picture`
       )
     ).json();
 
     // Extract and update the query response into the state
-    const { page, results } = info;
-    setLoad({ ...loader, loading: false, page, results });
+    let { page, results } = info;
+    if (results >= limit) page++;
+    setLoader({ ...loader, loading: false, nextPage: page, results });
 
     // Add new feed to array
-    updateFeed([...feed, ...data]);
+    console.log(data);
+    updateFeed(feed.concat(data));
   };
 
   // Fetch the first page on page load
   useEffect(() => {
     fetchData();
+
+    window.onscroll = function () {
+      debounce(() => {
+        if (window.innerHeight + window.scrollY >= document.body.offsetHeight) {
+          if (!loader.loading) fetchData();
+          console.log("bottom");
+        }
+      }, 200);
+    };
+    // window.onscroll = function () {
+    //   debounce(() => {
+    //     if (window.innerHeight + window.scrollY >= document.body.offsetHeight - 100) {
+    //       // if (!loader.loading) fetchData();
+    //       console.log("bottom");
+    //     }
+    //   }, 2000);
+    // };
   }, []);
 
   // Control Open modal
