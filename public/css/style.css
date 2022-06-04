@@ -80,12 +80,14 @@ body {
     bottom: -100px;
   }
 }
+
 .row.grid {
   display: flex;
   flex-direction: row;
   flex-wrap: wrap;
   justify-content: space-evenly;
 }
+
 select {
   height: 40px;
   width: 200px;
@@ -113,8 +115,13 @@ select {
   overflow: hidden;
   transition: 0.4s all;
 }
+
 .card:hover {
   box-shadow: 11px 15px 17px 0 rgb(60 64 68 / 38%), 0 1px 7px 5px rgb(60 64 67 / 5%);
+}
+
+.card:hover span {
+  display: block;
 }
 
 .card > .head {
@@ -149,7 +156,8 @@ select {
   padding: 10px;
   border: var(--var-boder);
 }
-.card img {
+
+.card div > img {
   width: 100%;
   border-radius: 50%;
   border: var(--var-boder);
@@ -169,6 +177,7 @@ p {
   text-transform: capitalize;
   font-size: 0.9em;
   color: #676768;
+  margin-bottom: 0;
 }
 
 button {
@@ -185,4 +194,101 @@ button:hover {
   background-color: #1e5177;
   color: white;
   border: solid #1e5177 1px;
+}
+
+span {
+  position: absolute;
+  right: 20px;
+  top: 20px;
+  width: 40px;
+  cursor: pointer;
+  display: none;
+  transition: 0.4s all;
+}
+span :hover {
+  width: 97%;
+}
+
+span img {
+  width: 100%;
+  border-radius: 50%;
+}
+
+.col.center {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+}
+
+.spinner {
+  display: inline-block;
+  width: 50px;
+  height: 50px;
+  border: 3px solid rgb(70 65 65 / 30%);
+  border-radius: 50%;
+  border-top-color: #4caf50;
+  animation: spin 1s ease-in-out infinite;
+  -webkit-animation: spin 1s ease-in-out infinite;
+}
+
+@keyframes spin {
+  to {
+    -webkit-transform: rotate(360deg);
+  }
+}
+@-webkit-keyframes spin {
+  to {
+    -webkit-transform: rotate(360deg);
+  }
+}
+
+.modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: center;
+}
+
+.modal .overlay {
+  background-color: #000000a6;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  top: 0;
+  position: absolute;
+  z-index: 1;
+}
+
+.modal-dialog {
+  min-width: 400px;
+  min-height: 200px;
+  background-color: white;
+  z-index: 2;
+  border-radius: 3px;
+  padding: 30px 40px;
+  transition: 0.4s all;
+  transform: translateY(-500px);
+  margin-top: 100px;
+}
+
+.modal.show .modal-dialog {
+  transform: translateY(0);
+}
+
+.modal-body {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  align-items: center;
+  justify-content: center;
+}
+
+strong {
+  font-weight: 500;
 }
