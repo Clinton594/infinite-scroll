@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import Modal from "./components/Modal";
 
 const limit = 20;
@@ -8,23 +8,28 @@ export default function App() {
   const [profile, setProfile] = useState({});
   const [filter, setFilter] = useState("");
   const [displayModal, setDisplay] = useState(false);
-  const [loader, setLoader] = useState({ nextPage: 1, loading: false });
+  const [loader, setLoader] = useState(false);
+  const [nextPage, setNextPage] = useState(1);
 
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     // Start Loader
-    setLoader({ ...loader, loading: true });
+    setLoader(true);
+
     // Query the API, extract data and info
-    const url = `https://randomuser.me/api/?page=${loader.nextPage}&results=${limit}&seed=abc&inc=name,gender,email,phone,picture`;
+    const url = `https://randomuser.me/api/?page=${nextPage}&results=${limit}&seed=abc&inc=name,gender,email,phone,picture`;
 
     const { results, info } = await (await fetch(url)).json();
-    setLoader({ loading: false, nextPage: info.results >= 20 ? info.page + 1 : info.page });
     updateFeed((prevState) => prevState.concat(results));
-  };
+    setNextPage(nextPage + 1);
+    setLoader(false);
+  }, [nextPage]);
 
-  const handleScroll = () => {
+  const handleScroll = useCallback(() => {
     if (window.innerHeight + document.documentElement.scrollTop !== document.documentElement.offsetHeight) return;
-    if (loader.loading === false) fetchData();
-  };
+    if (loader === false) {
+      fetchData();
+    }
+  }, []);
 
   // Fetch the first page on page load
   useEffect(() => {
@@ -36,6 +41,13 @@ export default function App() {
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
+
+  // // Testing Load next page after every 4 seconds
+  // useEffect(() => {
+  //   setTimeout(() => {
+  //     fetchData();
+  //   }, 4000);
+  // }, [nextPage]);
 
   // Control Open modal
   const showModal = (index) => {
@@ -53,6 +65,7 @@ export default function App() {
   const updateField = (e) => {
     setFilter(e.target.value);
   };
+
   if (filter) {
     feed = feed.filter((x) => x.gender === filter);
   }
@@ -95,7 +108,7 @@ export default function App() {
           ))}
       </div>
       {/* Spinner Section */}
-      {loader.loading && (
+      {loader && (
         <div className="row grid">
           <div className="col center">
             <i className="spinner"></i>
