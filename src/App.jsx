@@ -1,53 +1,28 @@
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useState, useRef, useCallback } from "react";
+import useFetchProfile from "./components/useFetchProfile";
 import Modal from "./components/Modal";
+import Card from "./components/Card";
 
-const limit = 20;
-
-export default function App() {
+export default function Appp() {
+  const [page, setPage] = useState(1);
   let [feed, updateFeed] = useState([]);
+  let { loader, hasMore } = useFetchProfile(page, updateFeed);
   const [profile, setProfile] = useState({});
   const [filter, setFilter] = useState("");
   const [displayModal, setDisplay] = useState(false);
-  const [loader, setLoader] = useState(false);
-  const [nextPage, setNextPage] = useState(1);
 
-  const fetchData = useCallback(async () => {
-    // Start Loader
-    setLoader(true);
-
-    // Query the API, extract data and info
-    const url = `https://randomuser.me/api/?page=${nextPage}&results=${limit}&seed=abc&inc=name,gender,email,phone,picture`;
-
-    const { results, info } = await (await fetch(url)).json();
-    updateFeed((prevState) => prevState.concat(results));
-    setNextPage(nextPage + 1);
-    setLoader(false);
-  }, [nextPage]);
-
-  const handleScroll = useCallback(() => {
-    if (window.innerHeight + document.documentElement.scrollTop !== document.documentElement.offsetHeight) return;
-    if (loader === false) {
-      fetchData();
-    }
-  }, []);
-
-  // Fetch the first page on page load
-  useEffect(() => {
-    fetchData();
-  }, []);
-
-  // Infinite Scroll
-  useEffect(() => {
-    window.addEventListener("scroll", handleScroll);
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
-
-  // // Testing Load next page after every 4 seconds
-  // useEffect(() => {
-  //   setTimeout(() => {
-  //     fetchData();
-  //   }, 4000);
-  // }, [nextPage]);
+  const observer = useRef();
+  const lastprofileRef = useCallback(
+    (node) => {
+      if (loader) return;
+      if (observer.current) observer.current.disconnect();
+      observer.current = new IntersectionObserver((entries) => {
+        if (entries[0].isIntersecting && hasMore) setPage((last) => last + 1);
+      });
+      if (node) observer.current.observe(node);
+    },
+    [loader, hasMore]
+  );
 
   // Control Open modal
   const showModal = (index) => {
@@ -82,30 +57,21 @@ export default function App() {
       </div>
       <div className="row grid">
         {feed.length > 0 &&
-          feed.map((profile, index) => (
-            <div className="col" key={`${profile.email}-${index}`}>
-              <div className="card">
-                <div className="head">
-                  <span onClick={() => removeProfile(index)}>
-                    <img src="img/circle-close-f-svgrepo-com.svg" alt="" />{" "}
-                  </span>
-                  <div className="figure">
-                    <img
-                      src={profile.picture.large && profile.picture.large}
-                      alt={profile.name.first && profile.name.first}
-                    />
-                  </div>
+          feed.map((profile, index) => {
+            if (feed.length === index + 1) {
+              return (
+                <div ref={lastprofileRef} className="col" key={`${profile.email}-${index}`}>
+                  <Card profile={profile} index={index} removeProfile={removeProfile} showModal={showModal} />
                 </div>
-                <div className="body">
-                  <h5>
-                    {profile.name.first && profile.name.first} {profile.name.last && profile.name.last}
-                  </h5>
-                  <p>{profile.gender && profile.gender}</p>
-                  <button onClick={() => showModal(index)}>Connect</button>
+              );
+            } else {
+              return (
+                <div className="col" key={`${profile.email}-${index}`}>
+                  <Card profile={profile} index={index} removeProfile={removeProfile} showModal={showModal} />
                 </div>
-              </div>
-            </div>
-          ))}
+              );
+            }
+          })}
       </div>
       {/* Spinner Section */}
       {loader && (
